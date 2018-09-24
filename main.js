@@ -5,7 +5,7 @@ function setup() {
   width = screen.width;
   createCanvas(width, height);
 
-  var setupBoidAmount = 10;
+  var setupBoidAmount = 100;
 
   flock = new Flock();
 
@@ -17,7 +17,7 @@ function setup() {
 }
 
 function draw() {
-  background('rgba(0,255,0, 0.3)');
+  background('rgb(188, 204, 229)');
   flock.run();
 }
 
@@ -38,11 +38,11 @@ Flock.prototype.run = function() {
 
 function Boid(x,y) {
   this.acceleration = createVector(0,0);
-  this.velocity  = createVector(random(-1,1), random(-1,1));
+  this.velocity  = createVector(random(-0.3,0.3), random(-0.3,0.3));
   this.position = createVector(x,y);
-  this.maxSpeed = 2;
+  this.maxSpeed = 1;
   this.maxForce = 0.05
-  this.r = random(1,3);
+  this.r = random(2,3);
 }
 
 Boid.prototype.run = function(boids){
@@ -156,10 +156,46 @@ Boid.prototype.align = function (boids) {
     sum.mult(this.maxSpeed);
     var steer = p5.Vector.sub(sum, this.velocity);
     steer.limit(this.maxForce);
+    
     return steer;
+    //return createVector(mouseX, mouseY);
+    
   }
   else {
     return createVector(0,0);
+  }
+}
+
+Boid.prototype.flyToMouse = function() {
+  var bipc = createVector(mouseX, mouseY);
+  var d = p5.Vector.dist(bipc, this.position);
+  var desRadius = 150;
+  var v = p5.Vector.sub(bipc, this.position);
+  v.div(100);
+  if(d < desRadius)
+  {
+    return v;
+  }
+  else
+  {
+    return createVector(0, 0);
+  }
+  
+}
+
+Boid.prototype.flyAwayFromMouse = function() {
+  var bipc = createVector(mouseX, mouseY);
+  var d = p5.Vector.dist(bipc, this.position);
+  var desRadius = 150;
+  var v = p5.Vector.sub(this.position, bipc);
+  v.div(100);
+  if(d < desRadius)
+  {
+    return v;
+  }
+  else
+  {
+    return createVector(0, 0);
   }
 }
 
@@ -190,13 +226,16 @@ Boid.prototype.flock = function(boids){
   var separate = this.separate(boids);
   var align = this.align(boids);
   var cohesion = this.cohesion(boids);
+  var awayFromMouse = this.flyAwayFromMouse();
+  
 
   separate.mult(1.5);
   align.mult(1.0);
   cohesion.mult(1.0);
+  awayFromMouse.mult(0.7);
 
   this.applyForce(separate);
   this.applyForce(align);
   this.applyForce(cohesion);
-
+  this.applyForce(awayFromMouse);
 }

@@ -1,0 +1,4 @@
+	1.Gå ifrån musen (musen är typ hunden)
+	2. skapa en hage, inte åka igenom väggarna.
+	4. skapa en AI-hund
+	5. karakteristiska personlighetsdrag (enkelt)
