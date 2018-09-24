@@ -18,6 +18,7 @@ function setup() {
 
 function draw() {
   background('rgb(188, 204, 229)');
+  console.log("mouseX: ", mouseX, ", mouseY: ", mouseY);
   flock.run();
 }
 
@@ -90,19 +91,19 @@ Boid.prototype.render = function(){
 }
 
 Boid.prototype.border = function(){
-  if (this.position.x <= -this.r){
+  if (this.position.x <= 20){
     this.velocity.x = -this.velocity.x;
     this.acceleration.x = -this.acceleration.x;
   }          //this.position.x = width + this.r;
-  if (this.position.y <= -this.r){
+  if (this.position.y <= 150){
     this.velocity.y = -this.velocity.y;
     this.acceleration.y = -this.acceleration.y;
   }//this.position.y = height + this.r;
-  if (this.position.x >= (width+this.r)){
+  if (this.position.x >= (width-4*this.r)){
     this.velocity.x = -this.velocity.x;
     this.acceleration.x = -this.acceleration.x;
   }     //this.position.x = -this.r;
-  if (this.position.y >= (height + this.r)){
+  if (this.position.y >= (height - 3*this.r)){
     this.velocity.y = -this.velocity.y;
     this.acceleration.y = -this.acceleration.y;
   } //this.position.y = -this.r;
@@ -237,5 +238,5 @@ Boid.prototype.flock = function(boids){
   this.applyForce(separate);
   this.applyForce(align);
   this.applyForce(cohesion);
-  //this.applyForce(awayFromMouse);
+  this.applyForce(awayFromMouse);
 }
