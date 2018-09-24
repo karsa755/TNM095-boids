@@ -90,19 +90,19 @@ Boid.prototype.render = function(){
 }
 
 Boid.prototype.border = function(){
-  if (this.position.x <= -this.r/1.1){
+  if (this.position.x <= -this.r){
     this.velocity.x = -this.velocity.x;
     this.acceleration.x = -this.acceleration.x;
   }          //this.position.x = width + this.r;
-  if (this.position.y <= -this.r/1.1){
+  if (this.position.y <= -this.r){
     this.velocity.y = -this.velocity.y;
     this.acceleration.y = -this.acceleration.y;
   }//this.position.y = height + this.r;
-  if (this.position.x >= (width+this.r)/1.1){
+  if (this.position.x >= (width+this.r)){
     this.velocity.x = -this.velocity.x;
     this.acceleration.x = -this.acceleration.x;
   }     //this.position.x = -this.r;
-  if (this.position.y >= (height + this.r)/1.1){
+  if (this.position.y >= (height + this.r)){
     this.velocity.y = -this.velocity.y;
     this.acceleration.y = -this.acceleration.y;
   } //this.position.y = -this.r;
@@ -156,10 +156,10 @@ Boid.prototype.align = function (boids) {
     sum.mult(this.maxSpeed);
     var steer = p5.Vector.sub(sum, this.velocity);
     steer.limit(this.maxForce);
-    
+
     return steer;
     //return createVector(mouseX, mouseY);
-    
+
   }
   else {
     return createVector(0,0);
@@ -180,7 +180,7 @@ Boid.prototype.flyToMouse = function() {
   {
     return createVector(0, 0);
   }
-  
+
 }
 
 Boid.prototype.flyAwayFromMouse = function() {
@@ -227,7 +227,7 @@ Boid.prototype.flock = function(boids){
   var align = this.align(boids);
   var cohesion = this.cohesion(boids);
   var awayFromMouse = this.flyAwayFromMouse();
-  
+
 
   separate.mult(1.5);
   align.mult(1.0);
@@ -237,5 +237,5 @@ Boid.prototype.flock = function(boids){
   this.applyForce(separate);
   this.applyForce(align);
   this.applyForce(cohesion);
-  this.applyForce(awayFromMouse);
+  //this.applyForce(awayFromMouse);
 }
