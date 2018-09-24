@@ -77,6 +77,7 @@ Boid.prototype.render = function(){
   var theta = this.velocity.heading() + radians(90);
   fill(255);
   stroke(200);
+  ellipse(this.position.x, this.position.y, this.r*6, this.r*6);
   push();
   translate(this.position.x, this.position.y);
   rotate(theta);
@@ -89,10 +90,22 @@ Boid.prototype.render = function(){
 }
 
 Boid.prototype.border = function(){
-  if (this.position.x < -this.r)          this.position.x = width + this.r;
-  if (this.position.y < -this.r)          this.position.y = height + this.r;
-  if (this.position.x > width+this.r)     this.position.x = -this.r;
-  if (this.position.y > height + this.r)  this.position.y = -this.r;
+  if (this.position.x <= -this.r/1.1){
+    this.velocity.x = -this.velocity.x;
+    this.acceleration.x = -this.acceleration.x;
+  }          //this.position.x = width + this.r;
+  if (this.position.y <= -this.r/1.1){
+    this.velocity.y = -this.velocity.y;
+    this.acceleration.y = -this.acceleration.y;
+  }//this.position.y = height + this.r;
+  if (this.position.x >= (width+this.r)/1.1){
+    this.velocity.x = -this.velocity.x;
+    this.acceleration.x = -this.acceleration.x;
+  }     //this.position.x = -this.r;
+  if (this.position.y >= (height + this.r)/1.1){
+    this.velocity.y = -this.velocity.y;
+    this.acceleration.y = -this.acceleration.y;
+  } //this.position.y = -this.r;
 }
 
 Boid.prototype.separate = function(boids){
@@ -171,6 +184,7 @@ Boid.prototype.cohesion = function(boids){
     }
   }
 }
+
 
 Boid.prototype.flock = function(boids){
   var separate = this.separate(boids);
