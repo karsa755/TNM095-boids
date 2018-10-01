@@ -1,11 +1,22 @@
 var flock;
 var height, width;
+
+
+var lines =[
+
+  //line(x1, y1, x2, y2)
+  [100, 100, 100, 800],
+  [1340, 100, 1340, 1340],
+  [100, 100, 1340, 100],
+  [100, 800, 1340, 800],
+];
+
 function setup() {
   height = screen.height;
   width = screen.width;
   createCanvas(width, height);
 
-  var setupBoidAmount = 100;
+  var setupBoidAmount = 2;
 
   flock = new Flock();
 
@@ -18,7 +29,7 @@ function setup() {
 
 function draw() {
   background('rgb(188, 204, 229)');
-  console.log("mouseX: ", mouseX, ", mouseY: ", mouseY);
+  //console.log("mouseX: ", mouseX, ", mouseY: ", mouseY);
   flock.run();
 }
 
@@ -77,6 +88,12 @@ Boid.prototype.seek = function(target){
 Boid.prototype.render = function(){
   var theta = this.velocity.heading() + radians(90);
   fill(255);
+  stroke(0);
+  // Lines
+  for (var i = 0; i < lines.length; i++) {
+    line(lines[i][0], lines[i][1], lines[i][2], lines[i][3]);
+  }
+  //sheeps
   stroke(200);
   ellipse(this.position.x, this.position.y, this.r*6, this.r*6);
   push();
@@ -107,6 +124,12 @@ Boid.prototype.border = function(){
     this.velocity.y = -this.velocity.y;
     this.acceleration.y = -this.acceleration.y;
   } //this.position.y = -this.r;
+  for (var i = 0; i < lines.length; i++) {
+    if (linePoint( lines[i][0],  lines[i][1],  lines[i][2], lines[i][3],  this.position.x,  this.position.y)) {
+      var dx = lines[i][2] - lines[i][0];
+      var dy = lines[i][3] - lines[i][1];
+    }
+  }
 }
 
 Boid.prototype.separate = function(boids){
@@ -239,4 +262,25 @@ Boid.prototype.flock = function(boids){
   this.applyForce(align);
   this.applyForce(cohesion);
   this.applyForce(awayFromMouse);
+}
+
+function linePoint( x1,  y1,  x2,  y2,  px,  py) {
+
+  // get distance from the point to the two ends of the line
+  var d1 = dist(px,py, x1,y1);
+  var d2 = dist(px,py, x2,y2);
+
+  // get the length of the line
+  var lineLen = dist(x1,y1, x2,y2);
+
+  var buffer = 0.1;    // higher # = less accurate
+
+  // if the two distances are equal to the line's
+  // length, the point is on the line!
+  // note we use the buffer here to give a range,
+  // rather than one #
+  if (d1+d2 >= lineLen-buffer && d1+d2 <= lineLen+buffer) {
+    return true;
+  }
+  return false;
 }
