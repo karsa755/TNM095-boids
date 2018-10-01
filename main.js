@@ -1,4 +1,13 @@
+//SOURCES:
+//http://www.cs.bath.ac.uk/~mdv/courses/CM30082/projects.bho/2007-8/Buckley-BP-dissertation-2007-8.pdf
+//http://www.csc.kth.se/utbildning/kth/kurser/DD143X/dkand13/Group9Petter/report/Martin.Barksten.David.Rydberg.report.pdf
+//https://p5js.org/examples/simulate-flocking.html
+//https://www.red3d.com/cwr/boids/
+//https://team.inria.fr/imagine/files/2014/10/flocks-hers-and-schools.pdf
+
+
 var flock;
+var dogX, dogY;
 var height, width;
 
 
@@ -19,7 +28,8 @@ function setup() {
   var setupBoidAmount = 2;
 
   flock = new Flock();
-
+  var theDog = new Dog(width/4, height/4);
+  flock.addDog(theDog);
   for (var i = 0; i < setupBoidAmount; i++) {
     var boid = new Boid(width/2, height/2);
     flock.addBoid(boid);
@@ -34,17 +44,63 @@ function draw() {
 
 function Flock(){
   this.boids = [];
+  this.dog;
 }
 
 // add boid to array
 Flock.prototype.addBoid = function(boid) {
   this.boids.push(boid);
 }
+Flock.prototype.addDog = function(newDog) {
+  this.dog = newDog;
+}
 
 Flock.prototype.run = function() {
   for (var i = 0; i < this.boids.length; i++) {
     this.boids[i].run(this.boids);
   }
+  this.dog.run(this.boids);
+}
+
+function Dog(x,y) {
+  this.acceleration = createVector(0,0);
+  this.velocity  = createVector(random(-0.3,0.3), random(-0.3,0.3));
+  this.position = createVector(x,y);
+  this.maxSpeed = 1;
+  this.maxForce = 0.05
+  this.r = 5;
+}
+
+Dog.prototype.run = function(boids){
+  this.herdSheep(boids);
+  this.update();
+  this.render();
+}
+
+Dog.prototype.applyForce = function(force){
+  this.acceleration.add(force);
+}
+
+Dog.prototype.update = function(){
+  this.velocity.add(this.acceleration);
+  this.velocity.limit(this.maxSpeed);
+  this.position.add(this.velocity);
+  dogX = this.position.x;
+  dogY = this.position.y;
+  this.acceleration.mult(0);
+}
+
+Dog.prototype.render = function(){
+  fill(34, 134, 200);
+  ellipse(this.position.x, this.position.y, this.r*6, this.r*6);
+}
+Dog.prototype.getPos = function(){
+  return this.position;
+}
+
+Dog.prototype.herdSheep = function(boids){
+  //do things here.
+  this.applyForce(0.0);
 }
 
 function Boid(x,y) {
@@ -213,10 +269,32 @@ Boid.prototype.flyToMouse = function() {
 
 }
 
-Boid.prototype.flyAwayFromMouse = function() {
-  var bipc = createVector(mouseX, mouseY);
+Boid.prototype.flyAwayFromMouse = function(x,y) {
+  var bipc = createVector(x, y);
   var d = p5.Vector.dist(bipc, this.position);
   var desRadius = 150;
+  var s = 200;
+  var scaleParameter = 1000 * this.fearLevel;
+
+  ratioX = scaleParameter * (s / (this.position.x * this.position.x));
+  ratioY = scaleParameter * (s / (this.position.y * this.position.y));
+
+  if(d < desRadius)
+  {
+    var v = (p5.Vector.sub(this.position, bipc)).normalize();
+    var resVec = createVector(v.x*ratioX, v.y*ratioY);
+    return resVec;
+  }
+  else
+  {
+    return createVector(0, 0);
+  }
+}
+
+Boid.prototype.flyAwayFromDog = function(x,y) {
+  var bipc = createVector(x, y);
+  var d = p5.Vector.dist(bipc, this.position);
+  var desRadius = 60;
   var s = 200;
   var scaleParameter = 1000 * this.fearLevel;
 
@@ -261,18 +339,21 @@ Boid.prototype.flock = function(boids){
   var separate = this.separate(boids);
   var align = this.align(boids);
   var cohesion = this.cohesion(boids);
-  var awayFromMouse = this.flyAwayFromMouse();
+  var awayFromMouse = this.flyAwayFromMouse(mouseX, mouseY);
+  var awayFromDog = this.flyAwayFromDog(dogX, dogY);
 
 
   separate.mult(this.seperationWeight);
   align.mult(this.alignmentWeight);
   cohesion.mult(this.cohesionWeight);
   awayFromMouse.mult(0.7);
-
+  awayFromDog.mult(0.7);
+  
   this.applyForce(separate);
   this.applyForce(align);
   this.applyForce(cohesion);
   this.applyForce(awayFromMouse);
+  this.applyForce(awayFromDog);
 }
 
 function linePoint( x1,  y1,  x2,  y2,  px,  py) {
