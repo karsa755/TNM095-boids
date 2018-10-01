@@ -29,7 +29,6 @@ function setup() {
 
 function draw() {
   background('rgb(188, 204, 229)');
-  //console.log("mouseX: ", mouseX, ", mouseY: ", mouseY);
   flock.run();
 }
 
@@ -55,6 +54,13 @@ function Boid(x,y) {
   this.maxSpeed = 1;
   this.maxForce = 0.05
   this.r = random(2,3);
+  this.cohesionDist = 150;
+  this.seperationDist = 30;
+  this.alignmentDist = 150;
+  this.cohesionWeight = 1.0;
+  this.seperationWeight = 1.5;
+  this.alignmentWeight = 1.0;
+  this.fearLevel = random(0.5,1);
 }
 
 Boid.prototype.run = function(boids){
@@ -133,12 +139,12 @@ Boid.prototype.border = function(){
 }
 
 Boid.prototype.separate = function(boids){
-  var desiredSeparation = 25.0;
+
   var steer = createVector(0,0);
   var count = 0;
   for (var i = 0; i < boids.length; i++) {
     var d =  p5.Vector.dist(this.position, boids[i].position);
-    if (d > 0 && d < desiredSeparation) {
+    if (d > 0 && d < this.seperationDist) {
       var diff = p5.Vector.sub(this.position, boids[i].position);
       diff.normalize();
       diff.div(d);
@@ -163,13 +169,13 @@ Boid.prototype.separate = function(boids){
 }
 
 Boid.prototype.align = function (boids) {
-  var naiberDist = 50;
+
   var sum = createVector(0,0);
   var count = 0;
 
   for (var i = 0; i < boids.length; i++) {
     var d =  p5.Vector.dist(this.position, boids[i].position);
-    if (d > 0 && d < naiberDist) {
+    if (d > 0 && d < this.alignmentDist) {
       sum.add(boids[i].velocity);
       count++;
     }
@@ -211,11 +217,17 @@ Boid.prototype.flyAwayFromMouse = function() {
   var bipc = createVector(mouseX, mouseY);
   var d = p5.Vector.dist(bipc, this.position);
   var desRadius = 150;
-  var v = p5.Vector.sub(this.position, bipc);
-  v.div(100);
+  var s = 200;
+  var scaleParameter = 1000 * this.fearLevel;
+
+  ratioX = scaleParameter * (s / (this.position.x * this.position.x));
+  ratioY = scaleParameter * (s / (this.position.y * this.position.y));
+
   if(d < desRadius)
   {
-    return v;
+    var v = (p5.Vector.sub(this.position, bipc)).normalize();
+    var resVec = createVector(v.x*ratioX, v.y*ratioY);
+    return resVec;
   }
   else
   {
@@ -225,13 +237,12 @@ Boid.prototype.flyAwayFromMouse = function() {
 
 
 Boid.prototype.cohesion = function(boids){
-  var naiberDist = 50;
   var sum = createVector(0,0);
   var count = 0;
 
   for (var i = 0; i < boids.length; i++) {
     var d =  p5.Vector.dist(this.position, boids[i].position);
-    if (d > 0 && d < naiberDist) {
+    if (d > 0 && d < this.cohesionDist) {
       sum.add(boids[i].position);
       count++;
     }
@@ -253,9 +264,9 @@ Boid.prototype.flock = function(boids){
   var awayFromMouse = this.flyAwayFromMouse();
 
 
-  separate.mult(1.5);
-  align.mult(1.0);
-  cohesion.mult(1.0);
+  separate.mult(this.seperationWeight);
+  align.mult(this.alignmentWeight);
+  cohesion.mult(this.cohesionWeight);
   awayFromMouse.mult(0.7);
 
   this.applyForce(separate);
