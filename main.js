@@ -17,6 +17,8 @@ var alignWeight = 1.0;
 var seperateWeight = 1.5;
 var dogFlockSize = 200;
 var closeToAvg = 400;
+var boidDogRadius = 60;
+var center;
 
 var lines =[
 
@@ -31,7 +33,8 @@ function setup() {
   height = screen.height;
   width = screen.width;
   createCanvas(width, height);
-
+  //center = createVector(600, 400);
+  center = createVector(width/2, height/2);
   var setupBoidAmount = 15;
 
   flock = new Flock();
@@ -47,7 +50,7 @@ function setup() {
 function draw() {
   background('rgb(188, 204, 229)');
   flock.run();
-  //console.log("MouseX: ", mouseX, " mouseY: ", mouseY);
+  console.log("MouseX: ", mouseX, " mouseY: ", mouseY);
 }
 
 function Flock(){
@@ -309,15 +312,14 @@ Boid.prototype.border = function(){
 
 Boid.prototype.avoidWall = function(x,y) {
   var bipc = createVector(x, y);
-  var d = p5.Vector.dist(bipc, this.position);
-  var desRadius = 150;
+  var d = p5.Vector.dist(center, this.position);
   var s = 200;
   var scaleParameter = 2000;
 
   ratioX = scaleParameter * (s / (this.position.x * this.position.x));
   ratioY = scaleParameter * (s / (this.position.y * this.position.y));
 
-    var v = (p5.Vector.sub(this.position, bipc)).normalize();
+    var v = (p5.Vector.sub(center, this.position)).normalize();
     var resVec = createVector(v.x*ratioX, v.y*ratioY);
     return resVec;
 }
@@ -421,14 +423,13 @@ Boid.prototype.flyAwayFromMouse = function(x,y) {
 Boid.prototype.flyAwayFromDog = function(x,y) {
   var bipc = createVector(x, y);
   var d = p5.Vector.dist(bipc, this.position);
-  var desRadius = 60;
   var s = 200;
   var scaleParameter = 1000 * this.fearLevel;
 
   ratioX = scaleParameter * (s / (this.position.x * this.position.x));
   ratioY = scaleParameter * (s / (this.position.y * this.position.y));
 
-  if(d < desRadius)
+  if(d < boidDogRadius)
   {
     var v = (p5.Vector.sub(this.position, bipc)).normalize();
     var resVec = createVector(v.x*ratioX, v.y*ratioY);
