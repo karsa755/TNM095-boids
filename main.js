@@ -50,7 +50,7 @@ function setup() {
 function draw() {
   background('rgb(188, 204, 229)');
   flock.run();
-  console.log("MouseX: ", mouseX, " mouseY: ", mouseY);
+  //console.log("MouseX: ", mouseX, " mouseY: ", mouseY);
 }
 
 function Flock(){
@@ -79,7 +79,7 @@ function Dog(x,y) {
   this.position = createVector(x,y);
   this.maxSpeed = 1;
   this.maxForce = 0.05
-  this.r = 5;
+  this.r = 3;
   this.sepWeight = 1.0;
   this.cohWeight = 1.0;
 }
@@ -105,7 +105,7 @@ Dog.prototype.update = function(){
 }
 
 Dog.prototype.render = function(){
-  fill(34, 134, 200);
+  fill(139,69,19);
   ellipse(this.position.x, this.position.y, this.r*6, this.r*6);
 }
 Dog.prototype.getPos = function(){
@@ -199,7 +199,59 @@ Dog.prototype.flyAwayFromSheep = function(bipc) {
 }
 
 Dog.prototype.border = function(){
+  /*if (this.position.x <= 20){
+    this.velocity.x = -this.velocity.x;
+    this.acceleration.x = -this.acceleration.x;
+  }          //this.position.x = width + this.r;
+  if (this.position.y <= 150){
+    this.velocity.y = -this.velocity.y;
+    this.acceleration.y = -this.acceleration.y;
+  }//this.position.y = height + this.r;
+  if (this.position.x >= (width-4*this.r)){
+    this.velocity.x = -this.velocity.x;
+    this.acceleration.x = -this.acceleration.x;
+  }     //this.position.x = -this.r;
+  if (this.position.y >= (height - 3*this.r)){
+    this.velocity.y = -this.velocity.y;
+    this.acceleration.y = -this.acceleration.y;
+  } //this.position.y = -this.r;
+*/
+  // colision with lines 
+  for (var i = 0; i < lines.length; i++) {
+    if (linePoint( lines[i][0],  lines[i][1],  lines[i][2], lines[i][3],  this.position.x,  this.position.y)) {
 
+      var awayFromWall = this.avoidWall(this.position.x+Math.sign(this.velocity.x)*30 , this.position.y+Math.sign(this.velocity.y)*30 );
+      this.velocity = createVector(0, 0);
+      this.acceleration = createVector(0, 0);
+      this.force = createVector(0,0);
+      this.applyForce(awayFromWall);
+      for (let index = 0; index < flock.boids.length; index++) {
+          if (p5.Vector.dist(flock.boids[index].position, this.position) < 30 ) {
+            flock.boids[index].force = createVector(0,0)
+            flock.boids[index].applyForce(awayFromWall);
+          }
+
+        /*if (p5.Vector.dist(flock.boids[index], this.position) < 20)
+        flock.boids[index].applyForce(awayFromWall);*/
+        
+      }
+
+    }
+  }
+}
+
+Dog.prototype.avoidWall = function(x,y) {
+  var bipc = createVector(x, y);
+  var d = p5.Vector.dist(center, this.position);
+  var s = 200;
+  var scaleParameter = 2000;
+
+  ratioX = scaleParameter * (s / (this.position.x * this.position.x));
+  ratioY = scaleParameter * (s / (this.position.y * this.position.y));
+
+    var v = (p5.Vector.sub(center, this.position)).normalize();
+    var resVec = createVector(v.x*ratioX, v.y*ratioY);
+    return resVec;
 }
 
 function Boid(x,y) {
