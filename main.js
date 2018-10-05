@@ -170,7 +170,7 @@ Boid.prototype.render = function(){
 }
 
 Boid.prototype.border = function(){
-  if (this.position.x <= 20){
+  /*if (this.position.x <= 20){
     this.velocity.x = -this.velocity.x;
     this.acceleration.x = -this.acceleration.x;
   }          //this.position.x = width + this.r;
@@ -186,12 +186,44 @@ Boid.prototype.border = function(){
     this.velocity.y = -this.velocity.y;
     this.acceleration.y = -this.acceleration.y;
   } //this.position.y = -this.r;
+*/
+  // colision with lines 
   for (var i = 0; i < lines.length; i++) {
     if (linePoint( lines[i][0],  lines[i][1],  lines[i][2], lines[i][3],  this.position.x,  this.position.y)) {
-      var dx = lines[i][2] - lines[i][0];
-      var dy = lines[i][3] - lines[i][1];
+
+      var awayFromWall = this.avoidWall(this.position.x+Math.sign(this.velocity.x)*30 , this.position.y+Math.sign(this.velocity.y)*30 );
+      this.velocity = createVector(0, 0);
+      this.acceleration = createVector(0, 0);
+      this.force = createVector(0,0);
+      this.applyForce(awayFromWall);
+      for (let index = 0; index < flock.boids.length; index++) {
+          if (p5.Vector.dist(flock.boids[index].position, this.position) < 30 ) {
+            flock.boids[index].force = createVector(0,0)
+            flock.boids[index].applyForce(awayFromWall);
+          }
+
+        /*if (p5.Vector.dist(flock.boids[index], this.position) < 20)
+        flock.boids[index].applyForce(awayFromWall);*/
+        
+      }
+
     }
   }
+}
+
+Boid.prototype.avoidWall = function(x,y) {
+  var bipc = createVector(x, y);
+  var d = p5.Vector.dist(bipc, this.position);
+  var desRadius = 150;
+  var s = 200;
+  var scaleParameter = 2000;
+
+  ratioX = scaleParameter * (s / (this.position.x * this.position.x));
+  ratioY = scaleParameter * (s / (this.position.y * this.position.y));
+
+    var v = (p5.Vector.sub(this.position, bipc)).normalize();
+    var resVec = createVector(v.x*ratioX, v.y*ratioY);
+    return resVec;
 }
 
 Boid.prototype.separate = function(boids){
@@ -365,7 +397,7 @@ function linePoint( x1,  y1,  x2,  y2,  px,  py) {
   // get the length of the line
   var lineLen = dist(x1,y1, x2,y2);
 
-  var buffer = 0.1;    // higher # = less accurate
+  var buffer = 1;    // higher # = less accurate
 
   // if the two distances are equal to the line's
   // length, the point is on the line!
