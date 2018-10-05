@@ -15,9 +15,9 @@ var aliDist = 150;
 var cohWeight = 1.0;
 var alignWeight = 1.0;
 var seperateWeight = 1.5;
-var dogFlockSize = 200;
-var closeToAvg = 400;
-var boidDogRadius = 60;
+var dogFlockSize = 130;
+var closeToAvg = 200;
+var boidDogRadius = 90;
 var center;
 
 var lines =[
@@ -123,6 +123,25 @@ Dog.prototype.herdSheep = function(boids){
     var seekSheep = this.seekSheep(badSheep.position);
     seekSheep.mult(this.cohWeight);
     this.applyForce(seekSheep);
+    if(p5.Vector.dist(this.position, badSheep.position) < boidDogRadius- 20)
+    {
+      console.log("hej");
+      var seperateDog = this.flyAwayFromSheep(averagePos);
+      seperateDog.mult(this.sepWeight);
+      this.applyForce(seperateDog);
+      var goTo = averagePos.sub(averagePos, badSheep.position);
+      badSheep.applyForce(goTo);
+    }
+    else
+    {
+      //this will be the same, probably.
+      var seekSheep = this.seekSheep(badSheep.position);
+      seekSheep.mult(this.cohWeight);
+      var seperateDog = this.flyAwayFromSheep(averagePos);
+      seperateDog.mult(this.sepWeight);
+      this.applyForce(seperateDog * 0.8);
+      this.applyForce(seekSheep);
+    }
   }
   else
   {
