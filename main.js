@@ -25,7 +25,7 @@ function setup() {
   width = screen.width;
   createCanvas(width, height);
 
-  var setupBoidAmount = 2;
+  var setupBoidAmount = 50;
 
   flock = new Flock();
   var theDog = new Dog(width/4, height/4);
