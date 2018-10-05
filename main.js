@@ -9,7 +9,14 @@
 var flock;
 var dogX, dogY;
 var height, width;
-
+var cohDist = 150;
+var sepDist = 30;
+var aliDist = 150;
+var cohWeight = 1.0;
+var alignWeight = 1.0;
+var seperateWeight = 1.5;
+var dogFlockSize = 200;
+var closeToAvg = 400;
 
 var lines =[
 
@@ -25,7 +32,7 @@ function setup() {
   width = screen.width;
   createCanvas(width, height);
 
-  var setupBoidAmount = 50;
+  var setupBoidAmount = 15;
 
   flock = new Flock();
   var theDog = new Dog(width/4, height/4);
@@ -40,6 +47,7 @@ function setup() {
 function draw() {
   background('rgb(188, 204, 229)');
   flock.run();
+  //console.log("MouseX: ", mouseX, " mouseY: ", mouseY);
 }
 
 function Flock(){
@@ -69,11 +77,14 @@ function Dog(x,y) {
   this.maxSpeed = 1;
   this.maxForce = 0.05
   this.r = 5;
+  this.sepWeight = 1.0;
+  this.cohWeight = 1.0;
 }
 
 Dog.prototype.run = function(boids){
   this.herdSheep(boids);
   this.update();
+  this.border();
   this.render();
 }
 
@@ -99,8 +110,93 @@ Dog.prototype.getPos = function(){
 }
 
 Dog.prototype.herdSheep = function(boids){
-  //do things here.
-  this.applyForce(0.0);
+  var averagePos = this.averageSheepPos(boids);
+  var badSheep = this.furthestSheep(boids, averagePos);
+  var distance = p5.Vector.dist(averagePos, badSheep.position);
+  
+  if( distance > dogFlockSize)
+  {
+    //this will change.
+    var seekSheep = this.seekSheep(badSheep.position);
+    seekSheep.mult(this.cohWeight);
+    this.applyForce(seekSheep);
+  }
+  else
+  {
+    if(p5.Vector.dist(this.position, averagePos) > closeToAvg)
+    {
+      
+      //this will be the same, probably.
+      var seekSheep = this.seekSheep(badSheep.position);
+      seekSheep.mult(this.cohWeight);
+      var seperateDog = this.flyAwayFromSheep(averagePos);
+      seperateDog.mult(this.sepWeight);
+      this.applyForce(seperateDog * 0.8);
+      this.applyForce(seekSheep);
+    }
+    else
+    {
+      var seperateDog = this.flyAwayFromSheep(averagePos);
+      seperateDog.mult(this.sepWeight);
+      this.applyForce(seperateDog);
+    }
+  }
+  
+}
+
+Dog.prototype.seekSheep = function(target){
+  var desired = p5.Vector.sub(target, this.position);
+  desired.normalize();
+  desired.mult(this.maxSpeed);
+  var steer = p5.Vector.sub(desired, this.velocity);
+  steer.limit(this.maxForce);
+  return steer;
+}
+
+Dog.prototype.averageSheepPos = function(boids)
+{
+  var result = createVector(0,0);
+  var count = 0;
+  for (var i = 0; i < boids.length; i++) {
+    result.add(boids[i].position);
+    count++;
+  }
+  result = result.div(count);
+  return result;
+}
+
+Dog.prototype.furthestSheep = function(boids, averagePosition){
+  var furthestAway = -1000;
+  var res;
+  for (var i = 0; i < boids.length; i++) {
+    var d =  p5.Vector.dist(averagePosition, boids[i].position);
+    if(d > furthestAway)
+    {
+      furthestAway = d;
+      res = boids[i];
+    }
+  }
+  return res;
+}
+
+Dog.prototype.flyAwayFromSheep = function(bipc) {
+  
+    var steer = createVector(0,0);
+    var d =  p5.Vector.dist(this.position, bipc);
+    var diff = p5.Vector.sub(this.position, bipc);
+    diff.normalize();
+    diff.div(d);
+    steer.add(diff);
+    steer.normalize();
+    steer.mult(this.maxSpeed);
+    steer.sub(this.velocity);
+    steer.limit(this.maxForce);
+    return steer;
+ 
+}
+
+Dog.prototype.border = function(){
+
 }
 
 function Boid(x,y) {
@@ -110,12 +206,12 @@ function Boid(x,y) {
   this.maxSpeed = 1;
   this.maxForce = 0.05
   this.r = random(2,3);
-  this.cohesionDist = 150;
-  this.seperationDist = 30;
-  this.alignmentDist = 150;
-  this.cohesionWeight = 1.0;
-  this.seperationWeight = 1.5;
-  this.alignmentWeight = 1.0;
+  this.cohesionDist = cohDist;
+  this.seperationDist = sepDist;
+  this.alignmentDist = aliDist;
+  this.cohesionWeight = cohWeight;
+  this.seperationWeight = seperateWeight;
+  this.alignmentWeight = alignWeight;
   this.fearLevel = random(0.5,1);
 }
 
@@ -253,7 +349,6 @@ Boid.prototype.separate = function(boids){
   }
 
   return steer;
-
 }
 
 Boid.prototype.align = function (boids) {
@@ -359,6 +454,26 @@ Boid.prototype.cohesion = function(boids){
     if (count > 0) {
       sum.div(count);
       return this.seek(sum);
+    }
+    else {
+      return createVector(0,0);
+    }
+  }
+}
+
+Boid.prototype.avgPos = function(boids){
+  var sum = createVector(0,0);
+  var count = 0;
+
+  for (var i = 0; i < boids.length; i++) {
+    var d =  p5.Vector.dist(this.position, boids[i].position);
+    if (d > 0 && d < this.cohesionDist) {
+      sum.add(boids[i].position);
+      count++;
+    }
+    if (count > 0) {
+      sum.div(count);
+      return sum;
     }
     else {
       return createVector(0,0);
