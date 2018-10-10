@@ -15,6 +15,7 @@ var aliDist = 150;
 var cohWeight = 1.0;
 var alignWeight = 1.0;
 var seperateWeight = 1.5;
+var toMouseWeight = 0.7;
 var dogFlockSize = 130;
 var closeToAvg = 200;
 var boidDogRadius = 90;
@@ -32,15 +33,21 @@ var lines =[
 
 function setup() {
   // create sliders
-  cohWeightSlider = createSlider(0, cohWeight*100, cohWeight*100);
+  cohWeightSlider = createSlider(0, 2*cohWeight*100, cohWeight*100);
   cohWeightSlider.position(20, 20);
-  alignWeightSlider = createSlider(0, alignWeight*100, alignWeight*100);
-  alignWeightSlider.position(20, 50);
-  sepWeightSlider = createSlider(0, seperateWeight*100, seperateWeight*100);
-  sepWeightSlider.position(20, 80);
-  text("cohesion", cohWeightSlider.x * 2 + cohWeightSlider.width, 35);
-  text("alignment", alignWeightSlider.x * 2 + alignWeightSlider.width, 65);
-  text("seperation", sepWeightSlider.x * 2 + sepWeightSlider.width, 95);
+  alignWeightSlider = createSlider(0, 2*alignWeight*100, alignWeight*100);
+  alignWeightSlider.position(20, 80);
+  sepWeightSlider = createSlider(0, 2*seperateWeight*100, seperateWeight*100);
+  sepWeightSlider.position(20, 140);
+  toMouseSlider = createSlider(0, 2*toMouseWeight*100, toMouseWeight*100);
+  toMouseSlider.position(20, 200);
+
+  cohDistSlider = createSlider(0, 2*cohDist, cohDist);
+  cohDistSlider.position(20, 260);
+  alignDistSlider = createSlider(0, 2*aliDist, aliDist);
+  alignDistSlider.position(20, 320);
+  seperationDistSlider = createSlider(0, 2*sepDist, sepDist);
+  seperationDistSlider.position(20, 380);
 
   height = screen.height;
   width = screen.width;
@@ -61,9 +68,13 @@ function setup() {
 
 function draw() {
   background('rgb(188, 204, 229)');
-  text("cohesion", cohWeightSlider.x * 2 + cohWeightSlider.width, 35);
-  text("alignment", alignWeightSlider.x * 2 + alignWeightSlider.width, 65);
-  text("seperation", sepWeightSlider.x * 2 + sepWeightSlider.width, 95);  
+  text("cohesion weight", cohWeightSlider.x * 2 + cohWeightSlider.width, 35);
+  text("alignment weight", alignWeightSlider.x * 2 + alignWeightSlider.width, 95);
+  text("seperation weight", sepWeightSlider.x * 2 + sepWeightSlider.width, 155);
+  text("away mouse", toMouseSlider.x * 2 + toMouseSlider.width, 205);
+  text("cohesion distance", cohDistSlider.x * 2 + cohDistSlider.width, 265);
+  text("alignment distance", alignDistSlider.x * 2 + alignDistSlider.width, 325);
+  text("seperation distance", seperationDistSlider.x * 2 + seperationDistSlider.width, 385);  
   flock.run();
   //console.log("MouseX: ", mouseX, " mouseY: ", mouseY);
 }
@@ -570,6 +581,10 @@ Boid.prototype.avgPos = function(boids){
 
 
 Boid.prototype.flock = function(boids){
+  this.cohesionDist = cohDistSlider.value();
+  this.seperationDist = seperationDistSlider.value();
+  this.alignmentDist = alignDistSlider.value();
+
   var separate = this.separate(boids);
   var align = this.align(boids);
   var cohesion = this.cohesion(boids);
@@ -579,11 +594,12 @@ Boid.prototype.flock = function(boids){
   this.cohesionWeight = cohWeightSlider.value() / 100;
   this.alignmentWeight = alignWeightSlider.value() / 100;
   this.seperationWeight = sepWeightSlider.value() / 100;
+  toMouseWeight = toMouseSlider.value() / 100;
 
   separate.mult(this.seperationWeight);
   align.mult(this.alignmentWeight);
   cohesion.mult(this.cohesionWeight);
-  awayFromMouse.mult(0.7);
+  awayFromMouse.mult(toMouseWeight);
   awayFromDog.mult(0.7);
   
   this.applyForce(separate);
