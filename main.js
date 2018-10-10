@@ -5,7 +5,7 @@
 //https://www.red3d.com/cwr/boids/
 //https://team.inria.fr/imagine/files/2014/10/flocks-hers-and-schools.pdf
 
-
+var cohWeightSlider, alignWeightSlider, sepWeightSlider;
 var flock;
 var dogX, dogY;
 var height, width;
@@ -30,6 +30,17 @@ var lines =[
 ];
 
 function setup() {
+  // create sliders
+  cohWeightSlider = createSlider(0, cohWeight*100, cohWeight*100);
+  cohWeightSlider.position(20, 20);
+  alignWeightSlider = createSlider(0, alignWeight*100, alignWeight*100);
+  alignWeightSlider.position(20, 50);
+  sepWeightSlider = createSlider(0, seperateWeight*100, seperateWeight*100);
+  sepWeightSlider.position(20, 80);
+  text("cohesion", cohWeightSlider.x * 2 + cohWeightSlider.width, 35);
+  text("alignment", alignWeightSlider.x * 2 + alignWeightSlider.width, 65);
+  text("seperation", sepWeightSlider.x * 2 + sepWeightSlider.width, 95);
+
   height = screen.height;
   width = screen.width;
   createCanvas(width, height);
@@ -49,6 +60,9 @@ function setup() {
 
 function draw() {
   background('rgb(188, 204, 229)');
+  text("cohesion", cohWeightSlider.x * 2 + cohWeightSlider.width, 35);
+  text("alignment", alignWeightSlider.x * 2 + alignWeightSlider.width, 65);
+  text("seperation", sepWeightSlider.x * 2 + sepWeightSlider.width, 95);  
   flock.run();
   //console.log("MouseX: ", mouseX, " mouseY: ", mouseY);
 }
@@ -125,11 +139,11 @@ Dog.prototype.herdSheep = function(boids){
     this.applyForce(seekSheep);
     if(p5.Vector.dist(this.position, badSheep.position) < boidDogRadius- 20)
     {
-      console.log("hej");
       var seperateDog = this.flyAwayFromSheep(averagePos);
       seperateDog.mult(this.sepWeight);
       this.applyForce(seperateDog);
       var goTo = averagePos.sub(averagePos, badSheep.position);
+      goTo.mult(3.0);
       badSheep.applyForce(goTo);
     }
     else
@@ -561,6 +575,9 @@ Boid.prototype.flock = function(boids){
   var awayFromMouse = this.flyAwayFromMouse(mouseX, mouseY);
   var awayFromDog = this.flyAwayFromDog(dogX, dogY);
 
+  this.cohesionWeight = cohWeightSlider.value() / 100;
+  this.alignmentWeight = alignWeightSlider.value() / 100;
+  this.seperationWeight = sepWeightSlider.value() / 100;
 
   separate.mult(this.seperationWeight);
   align.mult(this.alignmentWeight);
