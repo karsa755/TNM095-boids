@@ -17,7 +17,7 @@ var cohWeight = 1.0;
 var alignWeight = 1.0;
 var awayDogWeight = 0.7;
 var seperateWeight = 1.5;
-var toMouseWeight = 0.7;
+var toMouseWeight = 1.0;
 var dogFlockSize = 130;
 var closeToAvg = 200;
 var boidDogRadius = 90;
@@ -160,9 +160,6 @@ Dog.prototype.checkBoidsHage = function(boids) {
 
 Dog.prototype.herdSheep = function(boids){
   var boidChecker = this.checkBoidsHage(boids);
-  var averagePos = this.averageSheepPos(boids);
-  var badSheep = this.furthestSheep(boids, averagePos);
-  var distance = p5.Vector.dist(averagePos, badSheep.position);
   var dogToHage = (p5.Vector.sub(hage, this.position)).normalize();
   if(boidChecker)
   {
@@ -170,13 +167,17 @@ Dog.prototype.herdSheep = function(boids){
   }
   else
   {
+    var averagePos = this.averageSheepPos(boids);
+    var badSheep = this.furthestSheep(boids, averagePos);
+    var distance = p5.Vector.dist(averagePos, badSheep.position);
+
     if(distance > dogFlockSize && badSheep.position.x <= hage.x) // some sheep is not in flock
     {
       //this will change.
       var seekSheep = this.seekSheep(badSheep.position);
       seekSheep.mult(this.cohWeight);
       this.applyForce(seekSheep);
-      if(p5.Vector.dist(this.position, badSheep.position) < boidDogRadius) //when close enough, do herding.
+      if(p5.Vector.dist(this.position, badSheep.position) < boidDogRadius-5) //when close enough, do herding.
       {
         var seperateDog = this.flyAwayFromSheep(averagePos);
         seperateDog.mult(this.sepWeight);
@@ -240,25 +241,45 @@ Dog.prototype.averageSheepPos = function(boids)
   var result = createVector(0,0);
   var count = 0;
   for (var i = 0; i < boids.length; i++) {
-    result.add(boids[i].position);
-    count++;
+    if(boids[i].position.x <= hage.x)
+    {
+      result.add(boids[i].position);
+      count++;
+    }
   }
-  result = result.div(count);
-  return result;
+  if(count > 0)
+  {
+    result = result.div(count);
+    return result;
+  }
+  else
+  {
+    return createVector(hage.x, hage.y);
+  }
+  
 }
 
 Dog.prototype.furthestSheep = function(boids, averagePosition){
   var furthestAway = -1000;
   var res;
+  var checkLoop = false;
   for (var i = 0; i < boids.length; i++) {
     var d =  p5.Vector.dist(averagePosition, boids[i].position);
-    if(d > furthestAway)
+    if(d > furthestAway && boids[i].position.x <= hage.x)
     {
       furthestAway = d;
       res = boids[i];
+      checkLoop = true;
     }
   }
-  return res;
+  if(checkLoop)
+  {
+    return res;
+  }
+  else
+  {
+    return createVector(hage.x, hage.y);
+  }
 }
 
 Dog.prototype.flyAwayFromSheep = function(bipc) {
@@ -421,7 +442,7 @@ Boid.prototype.border = function(){
   for (var i = 0; i < lines.length; i++) {
     if (linePoint( lines[i][0],  lines[i][1],  lines[i][2], lines[i][3],  this.position.x,  this.position.y)) {
 
-      var awayFromWall = this.avoidWall(this.position.x+Math.sign(this.velocity.x)*30 , this.position.y+Math.sign(this.velocity.y)*30 );
+      var awayFromWall = this.avoidWall(this.position.x+Math.sign(this.velocity.x)*30 , this.position.y+Math.sign(this.velocity.y)*30, i);
       this.velocity = createVector(0, 0);
       this.acceleration = createVector(0, 0);
       this.force = createVector(0,0);
@@ -430,27 +451,31 @@ Boid.prototype.border = function(){
           if (p5.Vector.dist(flock.boids[index].position, this.position) < 30 ) {
             flock.boids[index].force = createVector(0,0)
             flock.boids[index].applyForce(awayFromWall);
-          }
-
-        /*if (p5.Vector.dist(flock.boids[index], this.position) < 20)
-        flock.boids[index].applyForce(awayFromWall);*/
-        
+          }        
       }
 
     }
   }
 }
 
-Boid.prototype.avoidWall = function(x,y) {
+Boid.prototype.avoidWall = function(x,y, i) {
   var bipc = createVector(x, y);
-  var d = p5.Vector.dist(center, this.position);
+  //var d = p5.Vector.dist(center, this.position);
   var s = 200;
   var scaleParameter = 2000;
+  var v;
 
-  ratioX = scaleParameter * (s / (this.position.x * this.position.x));
-  ratioY = scaleParameter * (s / (this.position.y * this.position.y));
-
-    var v = (p5.Vector.sub(center, this.position)).normalize();
+  ratioX = scaleParameter * (s / (bipc.x * bipc.x));
+  ratioY = scaleParameter * (s / (bipc.y * bipc.y));
+    if(i == (lines.length - 1) && this.position.x > hage.x)
+    {
+      var newCenter = createVector(1250, 450);
+      v = (p5.Vector.sub(newCenter, bipc)).normalize();
+    }
+    else
+    {
+      v = (p5.Vector.sub(center, bipc)).normalize();
+    }
     var resVec = createVector(v.x*ratioX, v.y*ratioY);
     return resVec;
 }
@@ -619,7 +644,7 @@ Boid.prototype.flock = function(boids){
   if(this.position.x > hage.x)
   {
     
-    if(this.maxSpeed > 0.3)
+    if(this.maxSpeed > 0.75)
     {
       this.maxSpeed = this.maxSpeed - 0.001;
     }
@@ -673,7 +698,7 @@ function linePoint( x1,  y1,  x2,  y2,  px,  py) {
   // get the length of the line
   var lineLen = dist(x1,y1, x2,y2);
 
-  var buffer = 1;    // higher # = less accurate
+  var buffer = 1.0;    // higher # = less accurate
 
   // if the two distances are equal to the line's
   // length, the point is on the line!
