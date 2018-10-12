@@ -20,6 +20,7 @@ var dogFlockSize = 130;
 var closeToAvg = 200;
 var boidDogRadius = 90;
 var center;
+var hage;
 
 var lines =[
 
@@ -54,6 +55,7 @@ function setup() {
   createCanvas(width, height);
   //center = createVector(600, 400);
   center = createVector(width/2, height/2);
+  hage = createVector(1100, 730);
   var setupBoidAmount = 15;
 
   flock = new Flock();
@@ -68,6 +70,7 @@ function setup() {
 
 function draw() {
   background('rgb(188, 204, 229)');
+  fill(125);
   text("cohesion weight", cohWeightSlider.x * 2 + cohWeightSlider.width, 35);
   text("alignment weight", alignWeightSlider.x * 2 + alignWeightSlider.width, 95);
   text("seperation weight", sepWeightSlider.x * 2 + sepWeightSlider.width, 155);
@@ -138,57 +141,82 @@ Dog.prototype.getPos = function(){
   return this.position;
 }
 
+Dog.prototype.checkBoidsHage = function(boids) {
+  for(var i = 0; i < boids.length; ++i)
+  {
+    if(boids[i].position.x <= hage.x)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 Dog.prototype.herdSheep = function(boids){
+  var boidChecker = this.checkBoidsHage(boids);
   var averagePos = this.averageSheepPos(boids);
   var badSheep = this.furthestSheep(boids, averagePos);
   var distance = p5.Vector.dist(averagePos, badSheep.position);
-  
-  if( distance > dogFlockSize)
+  var dogToHage = (p5.Vector.sub(hage, this.position)).normalize();
+  if(boidChecker)
   {
-    //this will change.
-    var seekSheep = this.seekSheep(badSheep.position);
-    seekSheep.mult(this.cohWeight);
-    this.applyForce(seekSheep);
-    if(p5.Vector.dist(this.position, badSheep.position) < boidDogRadius- 20)
-    {
-      var seperateDog = this.flyAwayFromSheep(averagePos);
-      seperateDog.mult(this.sepWeight);
-      this.applyForce(seperateDog);
-      var goTo = averagePos.sub(averagePos, badSheep.position);
-      goTo.mult(3.0);
-      badSheep.applyForce(goTo);
-    }
-    else
-    {
-      //this will be the same, probably.
-      var seekSheep = this.seekSheep(badSheep.position);
-      seekSheep.mult(this.cohWeight);
-      var seperateDog = this.flyAwayFromSheep(averagePos);
-      seperateDog.mult(this.sepWeight);
-      this.applyForce(seperateDog * 0.8);
-      this.applyForce(seekSheep);
-    }
+    this.applyForce(dogToHage);
   }
   else
   {
-    if(p5.Vector.dist(this.position, averagePos) > closeToAvg)
+    if(distance > dogFlockSize && badSheep.position.x <= hage.x) // some sheep is not in flock
     {
-      
-      //this will be the same, probably.
+      //this will change.
       var seekSheep = this.seekSheep(badSheep.position);
       seekSheep.mult(this.cohWeight);
-      var seperateDog = this.flyAwayFromSheep(averagePos);
-      seperateDog.mult(this.sepWeight);
-      this.applyForce(seperateDog * 0.8);
       this.applyForce(seekSheep);
+      if(p5.Vector.dist(this.position, badSheep.position) < boidDogRadius) //when close enough, do herding.
+      {
+        var seperateDog = this.flyAwayFromSheep(averagePos);
+        seperateDog.mult(this.sepWeight);
+        this.applyForce(seperateDog);
+        var goTo = averagePos.sub(averagePos, badSheep.position);
+        var alignVec = badSheep.align(boids);
+        alignVec.mult(3.0);
+        goTo.mult(3.0);
+        badSheep.applyForce(alignVec);
+        badSheep.applyForce(goTo);
+        this.applyForce(alignVec);
+        this.applyForce(goTo);
+      }
+      else // do not want to be too close to sheep
+      {
+        //this will be the same, probably.
+        var seekSheep = this.seekSheep(badSheep.position);
+        seekSheep.mult(this.cohWeight);
+        var seperateDog = this.flyAwayFromSheep(averagePos);
+        seperateDog.mult(this.sepWeight);
+        this.applyForce(seperateDog * 0.8);
+        this.applyForce(seekSheep);
+      }
     }
     else
     {
-      var seperateDog = this.flyAwayFromSheep(averagePos);
-      seperateDog.mult(this.sepWeight);
-      this.applyForce(seperateDog);
+      if(p5.Vector.dist(this.position, averagePos) > 2*boidDogRadius)
+      {
+        
+        //this will be the same, probably.
+        var seekSheep = this.seekSheep(badSheep.position);
+        seekSheep.mult(this.cohWeight);
+        var seperateDog = this.flyAwayFromSheep(averagePos);
+        seperateDog.mult(this.sepWeight);
+        this.applyForce(seperateDog * 0.8);
+        this.applyForce(seekSheep);
+      }
+      else
+      {
+        var seperateDog = this.flyAwayFromSheep(averagePos);
+        seperateDog.mult(this.sepWeight);
+        this.applyForce(seperateDog);
+      }
     }
   }
+
   
 }
 
