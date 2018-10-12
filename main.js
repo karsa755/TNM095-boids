@@ -5,7 +5,8 @@
 //https://www.red3d.com/cwr/boids/
 //https://team.inria.fr/imagine/files/2014/10/flocks-hers-and-schools.pdf
 
-var cohWeightSlider, alignWeightSlider, sepWeightSlider;
+var cohWeightSlider, alignWeightSlider, sepWeightSlider, cohDistSlider, alignDistSlider, seperationDistSlider
+, dogWeightSlider;
 var flock;
 var dogX, dogY;
 var height, width;
@@ -14,6 +15,7 @@ var sepDist = 30;
 var aliDist = 150;
 var cohWeight = 1.0;
 var alignWeight = 1.0;
+var awayDogWeight = 0.7;
 var seperateWeight = 1.5;
 var toMouseWeight = 0.7;
 var dogFlockSize = 130;
@@ -50,6 +52,9 @@ function setup() {
   seperationDistSlider = createSlider(0, 2*sepDist, sepDist);
   seperationDistSlider.position(20, 380);
 
+  dogWeightSlider = createSlider(0, 2*dogWeightSlider * 100, dogWeightSlider*100);
+  dogWeightSlider.position(20, 440);
+
   height = screen.height;
   width = screen.width;
   createCanvas(width, height);
@@ -74,10 +79,11 @@ function draw() {
   text("cohesion weight", cohWeightSlider.x * 2 + cohWeightSlider.width, 35);
   text("alignment weight", alignWeightSlider.x * 2 + alignWeightSlider.width, 95);
   text("seperation weight", sepWeightSlider.x * 2 + sepWeightSlider.width, 155);
-  text("away mouse", toMouseSlider.x * 2 + toMouseSlider.width, 205);
+  text("seperate mouse weight", toMouseSlider.x * 2 + toMouseSlider.width, 205);
   text("cohesion distance", cohDistSlider.x * 2 + cohDistSlider.width, 265);
   text("alignment distance", alignDistSlider.x * 2 + alignDistSlider.width, 325);
   text("seperation distance", seperationDistSlider.x * 2 + seperationDistSlider.width, 385);  
+  text("dog seperate weight", seperationDistSlider.x * 2 + seperationDistSlider.width, 445);  
   flock.run();
   //console.log("MouseX: ", mouseX, " mouseY: ", mouseY);
 }
@@ -623,12 +629,12 @@ Boid.prototype.flock = function(boids){
   this.alignmentWeight = alignWeightSlider.value() / 100;
   this.seperationWeight = sepWeightSlider.value() / 100;
   toMouseWeight = toMouseSlider.value() / 100;
-
+  awayDogWeight = dogWeightSlider.value() / 100;
   separate.mult(this.seperationWeight);
   align.mult(this.alignmentWeight);
   cohesion.mult(this.cohesionWeight);
   awayFromMouse.mult(toMouseWeight);
-  awayFromDog.mult(0.7);
+  awayFromDog.mult(awayDogWeight);
   
   this.applyForce(separate);
   this.applyForce(align);
