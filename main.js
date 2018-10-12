@@ -83,7 +83,7 @@ function draw() {
   text("cohesion distance", cohDistSlider.x * 2 + cohDistSlider.width, 265);
   text("alignment distance", alignDistSlider.x * 2 + alignDistSlider.width, 325);
   text("seperation distance", seperationDistSlider.x * 2 + seperationDistSlider.width, 385);  
-  text("dog seperate weight", seperationDistSlider.x * 2 + seperationDistSlider.width, 445);  
+  text("dog scare weight", seperationDistSlider.x * 2 + seperationDistSlider.width, 445);  
   flock.run();
   //console.log("MouseX: ", mouseX, " mouseY: ", mouseY);
 }
@@ -615,6 +615,25 @@ Boid.prototype.avgPos = function(boids){
 
 
 Boid.prototype.flock = function(boids){
+
+  if(this.position.x > hage.x)
+  {
+    
+    if(this.maxSpeed > 0.3)
+    {
+      this.maxSpeed = this.maxSpeed - 0.001;
+    }
+
+  }
+  else
+  {   
+    if(this.maxSpeed < 1)
+    {
+      this.maxSpeed = this.maxSpeed + 0.001;
+    }
+    
+  }
+  
   this.cohesionDist = cohDistSlider.value();
   this.seperationDist = seperationDistSlider.value();
   this.alignmentDist = alignDistSlider.value();
@@ -624,6 +643,8 @@ Boid.prototype.flock = function(boids){
   var cohesion = this.cohesion(boids);
   var awayFromMouse = this.flyAwayFromMouse(mouseX, mouseY);
   var awayFromDog = this.flyAwayFromDog(dogX, dogY);
+
+
 
   this.cohesionWeight = cohWeightSlider.value() / 100;
   this.alignmentWeight = alignWeightSlider.value() / 100;
