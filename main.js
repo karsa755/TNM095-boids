@@ -170,14 +170,14 @@ Dog.prototype.herdSheep = function(boids){
     var averagePos = this.averageSheepPos(boids);
     var badSheep = this.furthestSheep(boids, averagePos);
     var distance = p5.Vector.dist(averagePos, badSheep.position);
-
+    var randVal = random(0,5);
     if(distance > dogFlockSize && badSheep.position.x <= hage.x) // some sheep is not in flock
     {
       //this will change.
       var seekSheep = this.seekSheep(badSheep.position);
       seekSheep.mult(this.cohWeight);
       this.applyForce(seekSheep);
-      if(p5.Vector.dist(this.position, badSheep.position) < boidDogRadius-5) //when close enough, do herding.
+      if(p5.Vector.dist(this.position, badSheep.position) < boidDogRadius-randVal) //when close enough, do herding.
       {
         var seperateDog = this.flyAwayFromSheep(averagePos);
         seperateDog.mult(this.sepWeight);
@@ -204,16 +204,39 @@ Dog.prototype.herdSheep = function(boids){
     }
     else
     {
-      if(p5.Vector.dist(this.position, averagePos) > 2*boidDogRadius)
+      if(p5.Vector.dist(this.position, averagePos) > boidDogRadius-randVal) //go closer to sheep
       {
-        
-        //this will be the same, probably.
-        var seekSheep = this.seekSheep(badSheep.position);
-        seekSheep.mult(this.cohWeight);
-        var seperateDog = this.flyAwayFromSheep(averagePos);
-        seperateDog.mult(this.sepWeight);
-        this.applyForce(seperateDog * 0.8);
-        this.applyForce(seekSheep);
+        var randomAngle1 = random(0,1);
+        var randomAngle2 = random(0,1);
+        var angleScale = 19;
+        var angle1 = cos(PI / angleScale);
+        var angle2 = sin(PI / angleScale);
+        var angle1Neg = cos(-PI / angleScale);
+        var angle2Neg = sin(-PI / angleScale);
+        var angle1Pos = createVector( averagePos.x * angle1 - averagePos.y*angle2 , averagePos.y * angle2 + averagePos.y*angle1);
+        var angle2Pos = createVector(averagePos.x * angle1Neg - averagePos.y*angle2Neg , averagePos.y * angle2Neg + averagePos.y*angle1Neg);
+
+        var dogSheepRelation = p5.Vector.sub(averagePos, this.position);
+        var hageSheepRelation = p5.Vector.sub(averagePos, hage);
+        var away = createVector(
+           averagePos.x+(hageSheepRelation.normalize().x)*70 ,
+           averagePos.y+(hageSheepRelation.normalize().y)*70
+          );
+        stroke(255);
+        line(averagePos.x, averagePos.y, averagePos.x + hageSheepRelation.normalize().x*70, averagePos.y + hageSheepRelation.normalize().y*70);
+        line(hage.x, hage.y, averagePos.x * angle1 - averagePos.y*angle2 , averagePos.y * angle2 + averagePos.y*angle1);
+        line(hage.x, hage.y, averagePos.x * angle1Neg - averagePos.y*angle2Neg , averagePos.y * angle2Neg + averagePos.y*angle1Neg);
+
+        var seekSheeps = this.seekSheep(away);
+        var seekAngle1Vec = this.seekSheep(angle1Pos);
+        var seekAngle2Vec = this.seekSheep(angle2Pos);
+        seekSheeps.mult(1.3);
+        seekAngle1Vec.mult(randomAngle1);
+        seekAngle2Vec.mult(randomAngle2);
+        this.applyForce(seekAngle1Vec);
+        this.applyForce(seekAngle2Vec);
+        this.applyForce(seekSheeps);
+
       }
       else
       {
