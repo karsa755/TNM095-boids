@@ -17,7 +17,7 @@ var aliDist = 150;
 var cohWeight = 0.14;
 var alignWeight = 0.1;
 var awayDogWeight = 0.02;
-var seperateWeight = 0.13;
+var seperateWeight = 0.11;
 var toMouseWeight = 0.04;
 var dogFlockSize = 130;
 var closeToAvg = 200;
@@ -208,6 +208,7 @@ Dog.prototype.herdSheep = function(boids){
     }
     else
     {
+      
       if(p5.Vector.dist(this.position, averagePos) > boidDogRadius-randVal && p5.Vector.dist(this.position, hage)>p5.Vector.dist(hage, averagePos)) //go closer to sheep
       {
         // linjer från hagen
@@ -246,10 +247,12 @@ Dog.prototype.herdSheep = function(boids){
       {
         stroke(255);
         fill(255,0,0,0.0);
-        ellipse(averagePos.x,averagePos.y, boidDogRadius*2.4, boidDogRadius*2.4);
+        ellipse(averagePos.x,averagePos.y, boidDogRadius*1.5, boidDogRadius*1.5);
         var hageSheepRelation = p5.Vector.sub(averagePos, hage);
 
-        var ahead = createVector(this.position + this.velocity.normalize() * boidDogRadius);
+        var ahead = createVector(this.position.x + this.velocity.normalize().x*boidDogRadius,
+        this.position.y + this.velocity.normalize().y*boidDogRadius,
+        );
         var avoidance_force = (p5.Vector.sub(ahead, averagePos)).normalize();
 
         
@@ -259,13 +262,13 @@ Dog.prototype.herdSheep = function(boids){
          );
          var seekSheeps = this.seekSheep(away);
          this.applyForce(seekSheeps);
-         if (p5.Vector.dist(this.position, averagePos) <= boidDogRadius*1.3) {
+         if (p5.Vector.dist(this.position, averagePos) <= boidDogRadius) {
           
           var seperateDog = this.flyAwayFromSheep(averagePos);
-          seperateDog.mult(this.sepWeight);
+          //seperateDog.mult(this.sepWeight);
           //this.applyForce(seperateDog);'
           
-          this.applyForce(avoidance_force.mult(0.005));
+          this.applyForce(avoidance_force);
           stroke(255);
           line(this.position.x, this.position.y, this.position.x + avoidance_force.x*30,this.position.y + avoidance_force.y*30 )
          }
