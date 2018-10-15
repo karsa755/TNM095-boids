@@ -13,14 +13,14 @@ var height, width;
 var cohDist = 150;
 var sepDist = 30;
 var aliDist = 150;
-var cohWeight = 1.0;
-var alignWeight = 1.0;
-var awayDogWeight = 0.7;
-var seperateWeight = 1.5;
-var toMouseWeight = 1.0;
+var cohWeight = 0.14;
+var alignWeight = 0.1;
+var awayDogWeight = 0.04;
+var seperateWeight = 0.13;
+var toMouseWeight = 0.04;
 var dogFlockSize = 130;
 var closeToAvg = 200;
-var boidDogRadius = 90;
+var boidDogRadius = 110;
 var center;
 var hage;
 
@@ -112,11 +112,11 @@ function Dog(x,y) {
   this.acceleration = createVector(0,0);
   this.velocity  = createVector(random(-0.3,0.3), random(-0.3,0.3));
   this.position = createVector(x,y);
-  this.maxSpeed = 1;
-  this.maxForce = 0.05
+  this.maxSpeed = 1.10;
+  this.maxForce = 0.051;
   this.r = 3;
-  this.sepWeight = 1.0;
-  this.cohWeight = 1.0;
+  this.sepWeight = seperateWeight;
+  this.cohWeight = cohWeight;
 }
 
 Dog.prototype.run = function(boids){
@@ -164,6 +164,7 @@ Dog.prototype.herdSheep = function(boids){
   if(boidChecker)
   {
     this.applyForce(dogToHage);
+    awayDogWeight = 80.0;
   }
   else
   {
@@ -184,11 +185,10 @@ Dog.prototype.herdSheep = function(boids){
         this.applyForce(seperateDog);
         var goTo = averagePos.sub(averagePos, badSheep.position);
         var alignVec = badSheep.align(boids);
-        alignVec.mult(3.0);
-        goTo.mult(3.0);
+
         badSheep.applyForce(alignVec);
         badSheep.applyForce(goTo);
-        this.applyForce(alignVec);
+        //this.applyForce(alignVec);
         this.applyForce(goTo);
       }
       else // do not want to be too close to sheep
@@ -206,9 +206,7 @@ Dog.prototype.herdSheep = function(boids){
     {
       if(p5.Vector.dist(this.position, averagePos) > boidDogRadius-randVal) //go closer to sheep
       {
-        var randomAngle1 = random(0,1);
-        var randomAngle2 = random(0,1);
-        var angleScale = 19;
+        var angleScale = 25;
         var angle1 = cos(PI / angleScale);
         var angle2 = sin(PI / angleScale);
         var angle1Neg = cos(-PI / angleScale);
@@ -230,9 +228,9 @@ Dog.prototype.herdSheep = function(boids){
         var seekSheeps = this.seekSheep(away);
         var seekAngle1Vec = this.seekSheep(angle1Pos);
         var seekAngle2Vec = this.seekSheep(angle2Pos);
-        seekSheeps.mult(1.3);
-        seekAngle1Vec.mult(randomAngle1);
-        seekAngle2Vec.mult(randomAngle2);
+        seekSheeps.mult(1.0);
+        seekAngle1Vec.mult( 5*(1 / p5.Vector.dist(angle1Pos, hage)) );
+        seekAngle2Vec.mult( 5*(1 / p5.Vector.dist(angle2Pos, hage)) );
         this.applyForce(seekAngle1Vec);
         this.applyForce(seekAngle2Vec);
         this.applyForce(seekSheeps);
@@ -340,39 +338,39 @@ Dog.prototype.border = function(){
   } //this.position.y = -this.r;
 */
   // colision with lines 
+  var forwPosVec = createVector(this.position.x+Math.sign(this.velocity.x)*2 , this.position.y+Math.sign(this.velocity.y)*2 );
   for (var i = 0; i < lines.length; i++) {
-    if (linePoint( lines[i][0],  lines[i][1],  lines[i][2], lines[i][3],  this.position.x,  this.position.y)) {
+    if (linePoint( lines[i][0],  lines[i][1],  lines[i][2], lines[i][3],  forwPosVec.x,  forwPosVec.y)) {
 
-      var awayFromWall = this.avoidWall(this.position.x+Math.sign(this.velocity.x)*30 , this.position.y+Math.sign(this.velocity.y)*30 );
-      this.velocity = createVector(0, 0);
-      this.acceleration = createVector(0, 0);
-      this.force = createVector(0,0);
+      var awayFromWall = this.avoidWall(forwPosVec.x , forwPosVec.y, i);
+      //this.velocity = createVector(0, 0);
+      //this.acceleration = createVector(0, 0);
+      //this.force = createVector(0,0);
       this.applyForce(awayFromWall);
-      for (let index = 0; index < flock.boids.length; index++) {
-          if (p5.Vector.dist(flock.boids[index].position, this.position) < 30 ) {
-            flock.boids[index].force = createVector(0,0)
-            flock.boids[index].applyForce(awayFromWall);
-          }
 
-        /*if (p5.Vector.dist(flock.boids[index], this.position) < 20)
-        flock.boids[index].applyForce(awayFromWall);*/
-        
-      }
 
     }
   }
 }
 
-Dog.prototype.avoidWall = function(x,y) {
+Dog.prototype.avoidWall = function(x,y, i) {
   var bipc = createVector(x, y);
-  var d = p5.Vector.dist(center, this.position);
-  var s = 200;
-  var scaleParameter = 2000;
+  var d = p5.Vector.dist(bipc, this.position);
+  var s = 10;
+  var v;
 
-  ratioX = scaleParameter * (s / (this.position.x * this.position.x));
-  ratioY = scaleParameter * (s / (this.position.y * this.position.y));
-
-    var v = (p5.Vector.sub(center, this.position)).normalize();
+  ratioX =  (s / (d + 1));
+  ratioY =  (s / (d + 1));
+  
+    if(i == (lines.length - 1) && this.position.x > hage.x)
+    {
+      var newCenter = createVector(1250, 450);
+      v = (p5.Vector.sub(newCenter, bipc)).normalize();
+    }
+    else
+    {
+      v = (p5.Vector.sub(center, bipc)).normalize();
+    }
     var resVec = createVector(v.x*ratioX, v.y*ratioY);
     return resVec;
 }
@@ -462,34 +460,25 @@ Boid.prototype.border = function(){
   } //this.position.y = -this.r;
 */
   // colision with lines 
+  var forwPosVec = createVector(this.position.x+Math.sign(this.velocity.x)*3 , this.position.y+Math.sign(this.velocity.y)*3 );
   for (var i = 0; i < lines.length; i++) {
-    if (linePoint( lines[i][0],  lines[i][1],  lines[i][2], lines[i][3],  this.position.x,  this.position.y)) {
-
-      var awayFromWall = this.avoidWall(this.position.x+Math.sign(this.velocity.x)*30 , this.position.y+Math.sign(this.velocity.y)*30, i);
-      this.velocity = createVector(0, 0);
-      this.acceleration = createVector(0, 0);
-      this.force = createVector(0,0);
+    if (linePoint( lines[i][0],  lines[i][1],  lines[i][2], lines[i][3],  forwPosVec.x, forwPosVec.y)) {
+      
+      var awayFromWall = this.avoidWall(forwPosVec.x , forwPosVec.y, i);
       this.applyForce(awayFromWall);
-      for (let index = 0; index < flock.boids.length; index++) {
-          if (p5.Vector.dist(flock.boids[index].position, this.position) < 30 ) {
-            flock.boids[index].force = createVector(0,0)
-            flock.boids[index].applyForce(awayFromWall);
-          }        
-      }
-
     }
   }
 }
 
 Boid.prototype.avoidWall = function(x,y, i) {
   var bipc = createVector(x, y);
-  //var d = p5.Vector.dist(center, this.position);
-  var s = 200;
-  var scaleParameter = 2000;
+  var d = p5.Vector.dist(bipc, this.position);
+  var s = 10;
   var v;
 
-  ratioX = scaleParameter * (s / (bipc.x * bipc.x));
-  ratioY = scaleParameter * (s / (bipc.y * bipc.y));
+  ratioX =  (s / (d + 1));
+  ratioY =  (s / (d + 1));
+  
     if(i == (lines.length - 1) && this.position.x > hage.x)
     {
       var newCenter = createVector(1250, 450);
@@ -581,11 +570,8 @@ Boid.prototype.flyAwayFromMouse = function(x,y) {
   var bipc = createVector(x, y);
   var d = p5.Vector.dist(bipc, this.position);
   var desRadius = 150;
-  var s = 200;
-  var scaleParameter = 1000 * this.fearLevel;
-
-  ratioX = scaleParameter * (s / (this.position.x * this.position.x));
-  ratioY = scaleParameter * (s / (this.position.y * this.position.y));
+  ratioX = 1;
+  ratioY = 1;
 
   if(d < desRadius)
   {
@@ -602,11 +588,12 @@ Boid.prototype.flyAwayFromMouse = function(x,y) {
 Boid.prototype.flyAwayFromDog = function(x,y) {
   var bipc = createVector(x, y);
   var d = p5.Vector.dist(bipc, this.position);
-  var s = 200;
-  var scaleParameter = 1000 * this.fearLevel;
+  var s = 10;
+  var scaleParameter = 1 * this.fearLevel;
 
-  ratioX = scaleParameter * (s / (this.position.x * this.position.x));
-  ratioY = scaleParameter * (s / (this.position.y * this.position.y));
+  ratioX = scaleParameter * (s / (d + 1));
+  ratioY = scaleParameter * (s / (d + 1));
+
 
   if(d < boidDogRadius)
   {
@@ -721,7 +708,7 @@ function linePoint( x1,  y1,  x2,  y2,  px,  py) {
   // get the length of the line
   var lineLen = dist(x1,y1, x2,y2);
 
-  var buffer = 1.0;    // higher # = less accurate
+  var buffer = 0.1;    // higher # = less accurate
 
   // if the two distances are equal to the line's
   // length, the point is on the line!
