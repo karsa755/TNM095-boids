@@ -4,6 +4,7 @@
 //https://p5js.org/examples/simulate-flocking.html
 //https://www.red3d.com/cwr/boids/
 //https://team.inria.fr/imagine/files/2014/10/flocks-hers-and-schools.pdf
+//https://gamedevelopment.tutsplus.com/tutorials/understanding-steering-behaviors-collision-avoidance--gamedev-7777
 
 var cohWeightSlider, alignWeightSlider, sepWeightSlider, cohDistSlider, alignDistSlider, seperationDistSlider
 , dogWeightSlider;
@@ -204,8 +205,9 @@ Dog.prototype.herdSheep = function(boids){
     }
     else
     {
-      if(p5.Vector.dist(this.position, averagePos) > boidDogRadius-randVal) //go closer to sheep
+      if(p5.Vector.dist(this.position, averagePos) > boidDogRadius-randVal && p5.Vector.dist(this.position, hage)>p5.Vector.dist(hage, averagePos)) //go closer to sheep
       {
+        // linjer från hagen
         var angleScale = 25;
         var angle1 = cos(PI / angleScale);
         var angle2 = sin(PI / angleScale);
@@ -225,9 +227,11 @@ Dog.prototype.herdSheep = function(boids){
         line(hage.x, hage.y, averagePos.x * angle1 - averagePos.y*angle2 , averagePos.y * angle2 + averagePos.y*angle1);
         line(hage.x, hage.y, averagePos.x * angle1Neg - averagePos.y*angle2Neg , averagePos.y * angle2Neg + averagePos.y*angle1Neg);
 
-        var seekSheeps = this.seekSheep(away);
-        var seekAngle1Vec = this.seekSheep(angle1Pos);
-        var seekAngle2Vec = this.seekSheep(angle2Pos);
+
+
+        var seekSheeps = this.seekSheep(away); // gå till position bakom får
+        var seekAngle1Vec = this.seekSheep(angle1Pos); // gå till linje 1 
+        var seekAngle2Vec = this.seekSheep(angle2Pos); // gå till linje 2 
         seekSheeps.mult(1.0);
         seekAngle1Vec.mult( 5*(1 / p5.Vector.dist(angle1Pos, hage)) );
         seekAngle2Vec.mult( 5*(1 / p5.Vector.dist(angle2Pos, hage)) );
@@ -238,9 +242,33 @@ Dog.prototype.herdSheep = function(boids){
       }
       else
       {
-        var seperateDog = this.flyAwayFromSheep(averagePos);
-        seperateDog.mult(this.sepWeight);
-        this.applyForce(seperateDog);
+        stroke(255);
+        fill(255,0,0,0.0);
+        ellipse(averagePos.x,averagePos.y, boidDogRadius*2.4, boidDogRadius*2.4);
+        var hageSheepRelation = p5.Vector.sub(averagePos, hage);
+
+        var ahead = createVector(this.position + this.velocity.normalize() * boidDogRadius);
+        var avoidance_force = (p5.Vector.sub(ahead, averagePos)).normalize();
+
+        
+        var away = createVector(
+          averagePos.x+(hageSheepRelation.normalize().x)*70 ,
+          averagePos.y+(hageSheepRelation.normalize().y)*70
+         );
+         var seekSheeps = this.seekSheep(away);
+         this.applyForce(seekSheeps);
+         if (p5.Vector.dist(this.position, averagePos) <= boidDogRadius*1.3) {
+          
+          var seperateDog = this.flyAwayFromSheep(averagePos);
+          seperateDog.mult(this.sepWeight);
+          //this.applyForce(seperateDog);'
+          
+          this.applyForce(avoidance_force.mult(0.005));
+          stroke(255);
+          line(this.position.x, this.position.y, this.position.x + avoidance_force.x*30,this.position.y + avoidance_force.y*30 )
+         }
+        
+        
       }
     }
   }
